@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain.chat_models import init_chat_model
 
 load_dotenv()
 
@@ -55,5 +56,36 @@ def demo_stream_execution():
         print(chunk, end="", flush=True)
         print()
 
+def demo_schema_inspection():
+    prompt = ChatPromptTemplate.from_template(
+        "Summarize the following text: {text}"
+    )
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+    parser = StrOutputParser()
+    chain = prompt | model | parser
+
+    input_schema = chain.input_schema.model_json_schema()
+    output_schema = chain.output_schema.model_json_schema()
+
+    print(f"Input schema: {input_schema}")
+    print(f"Output schema: {output_schema}")
+
+    return chain
+
+def exercise_1():
+    prompt = ChatPromptTemplate.from_template(
+        "Write a short marketing tagline for the following product: {product} aimed at {audience}. Return only the tagline, no other text."
+    )
+    model = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+    parser = StrOutputParser()
+    chain = prompt | model | parser
+
+    result = chain.invoke({"product": "a new type of smartphone", "audience": "tech-savvy consumers"})
+    print(f"Result: {result}")
+    return result
+
+def new_way():
+    model = init_chat_model(model="gpt-4o-mini", temperature=0.7, max_tokens=100)
+
 if __name__ == "__main__":
-    demo_stream_execution()
+    exercise_1()
