@@ -151,5 +151,7 @@ def demo_debugging_chain():
     result = debug_chain.invoke({"name": "Debug"})
     print(f"Greeting: {result}")
 
+def demo_chain_branching():
+
 if __name__ == "__main__":
     demo_debugging_chain()
