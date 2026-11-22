@@ -24,6 +24,33 @@ def batch_embeddings():
         print(f"Vector norm: {np.linalg.norm(embedding):.4f}")
         print("-" * 50)
 
+def similarity_search():
+    docs = [
+        "Python is a programming language.",
+        "Java is a programming language.",
+        "Deep learning is a type of machine learning.",
+        "Cats are popular pets.",
+    ]
+
+    query = "What is a programming language?"
+
+    doc_vectors = embeddings.embed_documents(docs)
+    query_vector = embeddings.embed_query(query)
+
+    def cosine_similarity(a, b):
+        return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+    similarities = [cosine_similarity(doc_vector, query_vector) for doc_vector in doc_vectors]
+
+    ranked_docs = sorted(zip(docs, similarities), key=lambda x: x[1], reverse=True)
+
+    print(f"Query: {query}")
+    print("Ranked documents:")
+    for doc, similarity in ranked_docs:
+        print(f"Similarity: {similarity:.4f}: {doc}")
+
+
 if __name__ == "__main__":
     #basic_embedding()
-    batch_embeddings()
+    #batch_embeddings()
+    similarity_search()
