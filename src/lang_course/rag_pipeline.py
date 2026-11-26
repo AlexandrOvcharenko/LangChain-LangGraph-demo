@@ -41,19 +41,20 @@ def create_knowledge_base():
     )
     return vector_store
 
+llm = init_chat_model(
+    model="gpt-6-luna",
+    temperature=0.2,
+    reasoning_effort="none",
+    api_key=os.getenv("OPENAI_API_KEY"),
+)
+
 def demo_basic_rag():
     vector_store = create_knowledge_base()
     retriever = vector_store.as_retriever(
         search_type="similarity",
         search_kwargs={"k": 2},
     )
-    llm = init_chat_model(
-        model="gpt-6-luna",
-        temperature=0.2,
-        reasoning_effort="none",
-        api_key=os.getenv("OPENAI_API_KEY"),
-        base_url="https://api.openai.com/v1",
-    )
+
     prompt = ChatPromptTemplate.from_template(
         dedent("""
             Answer the question based only on the following context:
@@ -91,5 +92,48 @@ def demo_basic_rag():
         print(f"Answer: {response}")
         print("--------------------------------")
 
+def demo_rag_with_sources():
+    vector_store = create_knowledge_base()
+    retriever = vector_store.as_retriever(
+        search_kwargs={"k": 2},
+    )
+    prompt = ChatPromptTemplate.from_template(
+        dedent("""
+            Answer the question based on the context below. Include which sources you used.
+
+            Context:
+            {context}
+
+            Question: {question}
+
+            Answer (include sources):
+        """).strip()
+    )
+
+    def format_docs_with_sources(docs):
+        formatted = []
+        for i, doc in enumerate(docs):
+            source = doc.metadata.get("source", "unknown")
+            formatted.append(f"[{i + 1}] {source}:\n{doc.page_content}")
+        return "\n\n".join(formatted)
+
+    rag_chain = (
+        {"context": retriever | format_docs_with_sources, "question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+
+    questions = [
+        "What is LangChain?",
+    ]
+
+    for question in questions:
+        response = rag_chain.invoke(question)
+        print(f"Question: {question}")
+        print(f"Answer: {response}")
+        print("--------------------------------")
+
 if __name__ == "__main__":
-    demo_basic_rag()
+    # demo_basic_rag()
+    demo_rag_with_sources()
